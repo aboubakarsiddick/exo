@@ -1,0 +1,83 @@
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+const users = {}; // { socketId: pseudo }
+const pseudos = {}; // { pseudo: socketId }
+
+io.on('connection', (socket) => {
+    console.log('Nouvelle connexion', socket.id);
+
+    socket.emit('askPseudo');
+
+    socket.on('setPseudo', (pseudo) => {
+        users[socket.id] = pseudo;
+        pseudos[pseudo] = socket.id;
+        console.log(`Utilisateur enregistré : ${pseudo}`);
+        io.emit('updateUsers', Object.values(users)); // Envoyer la liste des pseudos
+    });
+
+    socket.on('privateMessage', ({to, message}) => {
+        const receiverSocketId = pseudos[to];
+        const senderPseudo = users[socket.id];
+
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit('privateMessage', { from: senderPseudo, message });
+            socket.emit('privateMessage', { from: senderPseudo, message }); // écho pour l'envoyeur
+        } else {
+            socket.emit('serverMessage', 'Utilisateur non trouvé ou déconnecté.');
+        }
+    });
+
+    socket.on('disconnect', () => {
+        const pseudo = users[socket.id];
+        if (pseudo) {
+            delete pseudos[pseudo];
+            delete users[socket.id];
+            io.emit('updateUsers', Object.values(users));
+            io.emit('serverMessage', `${pseudo} s'est déconnecté.`);
+        }
+        console.log('Déconnexion', socket.id);
+    });
+});
+
+const PORT = 300;
+server.listen(PORT, () => {
+    console.log(`Serveur lancé sur http://localhost:${PORT}`);
+});
+
+
+// public class app {
+//     public static void main(String[] args) {
+//         // Créer un objet Scanner pour lire les entrées utilisateur
+//         Scanner scanner = new Scanner(System.in);
+
+//         // Demander à l'utilisateur de saisir une valeur
+//         System.out.print("Entrez une valeur : ");
+
+//         // Récupérer la valeur saisie par l'utilisateur
+//         String valeur = scanner.nextLine();
+
+//         // Afficher la valeur saisie
+//         System.out.println("Vous avez saisi : " + valeur);
+
+//         // Fermer le scanner pour éviter les fuites de ressources
+//         scanner.close();
+//     }
+
+// public class recuperer {
+//     public static void main(String[] args) {
+//         String message = "hello word";
+//         System.out.println(message);
+//     }    
+// }
+// }
+// java
+
