@@ -288,7 +288,7 @@ public class Main {
                 if (nom.equals(oldNom)) {
                     List<Object> list = Arrays.asList(parts);
                     list.set(option-1, newData);
-                    Object[] parts2 = list.toArray();
+                    // Object[] parts2 = list.toArray();
                    System.err.println("produit vendue avec succes ! \n");
                     continue;
                 }
