@@ -120,7 +120,6 @@ public class Main {
         String file = "file.txt";
         try (BufferedReader read = new BufferedReader(new FileReader(file))){
             String line;
-
             while ((line = read.readLine()) != null) { 
                 System.out.println(line);
                 if (!line.isEmpty()) {
